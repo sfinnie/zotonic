@@ -1,0 +1,57 @@
+<p>This is a soup-to-nuts guide for setting up <a href="http://zotonic.com/">zotonic</a> on ubuntu <a href="http://www.ubuntu.com/server/get-ubuntu/download">10.04 LTS server</a>.  It's very specific to that setup: while it may work on other ubuntu versions and/or distros, it hasn't been tested on any other combinations.</p><p><strong>1. Preliminaries - make sure the OS is up to date</strong></p><p>A generally sensible idea, and worth doing at the start:</p><pre>~$ <strong>sudo apt-get update</strong>
+~$ <strong>sudo apt-get upgrade --show-upgraded</strong></pre><p><strong>2. Install Erlang</strong></p><pre>~$ <strong>sudo apt-get install erlang build-essential libxml2-dev libexpat1-dev</strong></pre><p><strong>3. Verify Erlang install</strong></p><p>Worth checking it's installed OK.  Needs to be at least version R13 (which should be the default for 10.04):</p><pre>~$ <strong>which erl</strong>
+/usr/bin/erl
+~$ <strong>erl</strong>
+Erlang R13B03
+Eshell V5.7.4 (abort with ^G)
+1&gt; <strong>ctrl-c</strong>
+BREAK: (a)bort (c)ontinue (p)roc info (i)nfo (l)oaded (v)ersion (k)ill (D)b-tables (d)istribution
+<strong>a</strong>
+~$</pre><p><strong>4. Install ImageMagick</strong></p><p>Zotonic uses ImageMagick for image manipulation so it's needed as a pre-requisite.</p><pre>~$ <strong>sudo apt-get install imagemagick
+</strong>
+</pre><p><span style="text-decoration: underline;"><strong>Note:</strong></span> The <a href="http://zotonic.com/documentation/628/installation">install instructions</a> say to install libjpeg and libtiff. However, they're not pulled in as an auto-dependency and naming explicitly causes an error.  Installation seems to work without installing them.</p><p><strong>5. Ensure convert, identify and exif tools have all been installed and are on path</strong></p><pre>~$ <strong>which convert</strong>
+/usr/bin/convert
+~$ <strong>which identify</strong>
+/usr/bin/identify
+~$ <strong>which exif</strong>
+/usr/bin/exif</pre><p><strong>6. Install PostgreSQL</strong></p><pre>~$ <strong>sudo apt-get install postgresql</strong></pre><p><strong>7. Download Zotonic</strong></p><p>You can either download the latest release as a zip file or pull the latest development version direct from the mercurial repository.  Either way, you need to decide at this point where to install zotonic.  It doesn't matter where you put it, although the root dir must be named 'zotonic'.  The remainder of this guide assumes ~/bin/zotonic.</p><pre>~$ <strong>mkdir -p ~/bin/zotonic</strong></pre><p>To use the latest release:</p><ul><li>Download from google code (<strong>note</strong>: check latest version <a href="http://zotonic.com/download">here</a> and update version number below accordingly):</li></ul><pre style="padding-left: 30px;">~$ <strong>sudo apt-get install unzip</strong>
+~$ <strong>cd ~/bin</strong>
+~$ <strong>wget http://zotonic.googlecode.com/files/zotonic-0.6.0.zip</strong>
+~$ <strong>unzip zotonic-0.6.0.zip</strong></pre><p style="padding-left: 30px;">(Unzipping will automatically put all files in the zotonic sub directory).</p><p>Or the latest development version:</p><ul><li>Download from the mercurial repository:</li></ul><pre style="padding-left: 30px;">~$ <strong>sudo apt-get install mercurial</strong>
+~$ <strong>cd ~/bin</strong> 
+~$ <strong>hg clone https://zotonic.googlecode.com/hg/ zotonic</strong></pre><p><strong>8. Build zotonic</strong></p><p>This might take a while, but should run without intervention.<strong><br /></strong></p><pre>~$ <strong>cd ~/bin/zotonic</strong>
+~$ <strong>make</strong></pre><p><strong>9. Create the Zotonic db in PostgreSQL</strong></p><ul><li>First - for security - change the password for the primary postgres user (see <a href="https://help.ubuntu.com/community/PostgreSQL">here</a> for more details).  Password is hidden on entry (remember to write down!).</li></ul><pre style="padding-left: 30px;">~$ <strong>sudo -u postgres psql postgres
+</strong>postgres=# <strong>\password postgres</strong>
+Enter new password:
+Enter it again:
+postgres=# <strong>\q
+</strong>~$</pre><ul><li>Create zotonic database and user - remember to change &amp; write down password</li></ul><pre style="padding-left: 30px;">~$ <strong>sudo -u postgres psql postgres</strong>
+postgres=# <strong>CREATE USER zotonic WITH PASSWORD ‘&lt;ChangeMe&gt;’;</strong>
+CREATE ROLE 
+postgres=# <strong>CREATE DATABASE zotonic WITH OWNER = zotonic ENCODING = ‘UTF8’;</strong>
+CREATE DATABASE 
+postgres=# <strong>GRANT ALL ON DATABASE zotonic TO zotonic;</strong>
+postgres=# <strong>\c zotonic</strong>
+psql (8.4.7)
+You are now connected to database “zotonic”.
+postgres=# <strong>CREATE LANGUAGE “plpgsql”;</strong>
+CREATE LANGUAGE
+zotonic=# <strong>\q</strong>
+~$</pre><ul><li>Change Postgres to allow access using login &amp; password (by default, Postgres uses ident authentication - which doesn't allow login &amp; password).</li></ul><pre style="padding-left: 30px;">~$ <strong>sudo vi /etc/postgresql/8.4/main/pg_hba.conf</strong></pre><p style="padding-left: 30px;">Change access (bottom of file) to read as follows, then save &amp; quit:</p><pre style="padding-left: 30px;"># "local" is for Unix domain socket connections only
+#local	all	all	ident
+local	all	all	trust
+# IPv4 local connections:
+#host	all	all	127.0.0.1/32	ident
+host	all	all	127.0.0.1/32	trust</pre><p style="padding-left: 30px;">Now restart Postgres</p><pre style="padding-left: 30px;">~$ <strong>sudo /etc/init.d/postgresql-8.4 restart</strong></pre><p style="padding-left: 30px;">And check you can log in from the command line (make sure you're logged in as the user who will start zotonic):</p><pre style="padding-left: 30px;">~$ <strong>psql -d zotonic -U zotonic -W</strong>
+Password for user zotonic:
+psql (8.4.7)
+Type "help" for help.
+zotonic=&gt; <strong>\q</strong>
+~$</pre><p><strong>10. Configure Zotonic</strong></p><pre>~$ <strong>cd ~/bin/zotonic/priv/sites/default</strong>
+~$ <strong>cp <a href="http://config.in/">config.in</a> config</strong>
+~$ <strong>vi config</strong></pre><ul><li>Change the password to match that set in step 9 above (use the zotonic password, not the postgres one):</li></ul><pre style="padding-left: 30px;">{dbpassword, "yourdbpassword"},
+</pre><ul><li>Set values for the signing keys:</li></ul><pre style="padding-left: 30px;">{sign_key_simple, &lt;&lt;"--change-me--"&gt;&gt;},
+{sign_key, &lt;&lt;"--change-me--"&gt;&gt;}</pre><ul><li> Save the file and quit.</li></ul><p>11. Ensure files are read-write</p><pre>~$ <strong>chmod -R +rw ~/bin/zotonic/priv/sites/default/files</strong></pre><p>12. Start zotonic</p><pre>~$ <strong>cd ~/bin/zotonic</strong>
+~$ <strong>./start.sh</strong></pre><p>First time through may take a while, with a slew of messages on screen.  Eventually however you should see something like the following:</p><pre>=PROGRESS REPORT==== 19-Feb-2011::21:06:30 ===
+ application: zotonic
+ started_at: 'zotonic1065@ubuntu-server'</pre><p>If you see an error, it's most likely to database-related.  See the <a href="http://zotonic.com/documentation/628/installation">docs</a> and/or visit the <a href="http://groups.google.com/group/zotonic-users">forum</a> for help.</p><p><strong>13. Load in browser</strong></p><p>Assuming everything went OK you should be able to load in your browser</p><ul><li>Main view: http://&lt;your-server-address&gt;:8000</li><li>Admin: http://&lt;your-server-address&gt;:8000/admin</li></ul><p>Note: at time of writing, the first access to the admin interface will require setting the admin password.  This may change at some later point.</p>
