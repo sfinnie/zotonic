@@ -1,0 +1,8 @@
+This repo contains contribs/suggestions for the zotonic content management system (see www.zotonic.org).
+
+At present it's limited to documentation, arranged as follows:
+
+ - docs/unstyled: the raw html as entered into zotonic's wysiwyg content editor;
+ - docs/styled: the result of viewing above in the default zotonic application.
+
+
