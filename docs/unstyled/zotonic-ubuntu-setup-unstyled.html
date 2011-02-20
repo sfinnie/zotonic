@@ -26,15 +26,15 @@ Enter new password:
 Enter it again:
 postgres=# <strong>\q
 </strong>~$</pre><ul><li>Create zotonic database and user - remember to change &amp; write down password</li></ul><pre style="padding-left: 30px;">~$ <strong>sudo -u postgres psql postgres</strong>
-postgres=# <strong>CREATE USER zotonic WITH PASSWORD ‘&lt;ChangeMe&gt;’;</strong>
+postgres=# <strong>CREATE USER zotonic WITH PASSWORD &quot;&lt;ChangeMe&gt;&quot;;</strong>
 CREATE ROLE 
-postgres=# <strong>CREATE DATABASE zotonic WITH OWNER = zotonic ENCODING = ‘UTF8’;</strong>
+postgres=# <strong>CREATE DATABASE zotonic WITH OWNER = zotonic ENCODING = &quot; UTF8 &quot;;</strong>
 CREATE DATABASE 
 postgres=# <strong>GRANT ALL ON DATABASE zotonic TO zotonic;</strong>
 postgres=# <strong>\c zotonic</strong>
 psql (8.4.7)
 You are now connected to database “zotonic”.
-postgres=# <strong>CREATE LANGUAGE “plpgsql”;</strong>
+postgres=# <strong>CREATE LANGUAGE &quot;plpgsql&quot;;</strong>
 CREATE LANGUAGE
 zotonic=# <strong>\q</strong>
 ~$</pre><ul><li>Change Postgres to allow access using login &amp; password (by default, Postgres uses ident authentication - which doesn't allow login &amp; password).</li></ul><pre style="padding-left: 30px;">~$ <strong>sudo vi /etc/postgresql/8.4/main/pg_hba.conf</strong></pre><p style="padding-left: 30px;">Change access (bottom of file) to read as follows, then save &amp; quit:</p><pre style="padding-left: 30px;"># "local" is for Unix domain socket connections only
@@ -48,7 +48,7 @@ psql (8.4.7)
 Type "help" for help.
 zotonic=&gt; <strong>\q</strong>
 ~$</pre><p><strong>10. Configure Zotonic</strong></p><pre>~$ <strong>cd ~/bin/zotonic/priv/sites/default</strong>
-~$ <strong>cp <a href="http://config.in/">config.in</a> config</strong>
+~$ <strong>cp config.in config</strong>
 ~$ <strong>vi config</strong></pre><ul><li>Change the password to match that set in step 9 above (use the zotonic password, not the postgres one):</li></ul><pre style="padding-left: 30px;">{dbpassword, "yourdbpassword"},
 </pre><ul><li>Set values for the signing keys:</li></ul><pre style="padding-left: 30px;">{sign_key_simple, &lt;&lt;"--change-me--"&gt;&gt;},
 {sign_key, &lt;&lt;"--change-me--"&gt;&gt;}</pre><ul><li> Save the file and quit.</li></ul><p>11. Ensure files are read-write</p><pre>~$ <strong>chmod -R +rw ~/bin/zotonic/priv/sites/default/files</strong></pre><p>12. Start zotonic</p><pre>~$ <strong>cd ~/bin/zotonic</strong>
